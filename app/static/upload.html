@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>Embedding文件分割系统</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Inter', 'HarmonyOS Sans', 'Helvetica Neue', Arial, sans-serif;
+      background: #f7f8fa;
+      margin: 0;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 680px;
+      margin: 40px auto 0 auto;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(35, 36, 39, 0.07);
+      padding: 36px 36px 32px 36px;
+      position: relative;
+      overflow: hidden;
+    }
+    .header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .upload-face {
+      width: 110px;
+      min-width: 60px;
+      max-width: 23vw;
+      height: auto;
+      margin-left: 16px;
+      margin-top: 0;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+    .title-block {
+      flex: 1 1 180px;
+      min-width: 160px;
+    }
+    h2 {
+      margin: 0 0 10px 0;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -1px;
+      color: #1a232a;
+    }
+    .subtitle {
+      color: #7b8a98;
+      font-size: 1.15rem;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .upload-area {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-top: 12px;
+    }
+    label {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #444;
+    }
+    input[type="file"] {
+      display: block;
+      font-size: 1rem;
+      padding: 12px 0;
+      background: #f5f6fa;
+      border: none;
+      border-radius: 6px;
+      width: 100%;
+      color: #444;
+      margin-bottom: 10px;
+    }
+    .settings-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .settings-row label {
+      margin-bottom: 0;
+      font-size: 1rem;
+      color: #333;
+      margin-right: 8px;
+    }
+    .chunk-select {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .chunk-select input[type="number"] {
+      width: 74px;
+      margin-left: 6px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #e0e3ea;
+      font-size: 1rem;
+    }
+    .overlap-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .overlap-group input[type="number"] {
+      width: 54px;
+      margin-left: 4px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #e0e3ea;
+      font-size: 1rem;
+    }
+    .info-tip {
+      font-size: 0.98rem;
+      color: #777;
+      margin: 5px 0 0 0;
+    }
+    button[type="submit"] {
+      width: 100%;
+      padding: 13px 0;
+      background: #2baaff;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 1.17rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 4px #2baaff10;
+      margin-top: 8px;
+      transition: background 0.18s;
+    }
+    button[type="submit"]:hover {
+      background: #187ec6;
+    }
+    #progress {
+      width: 100%;
+      height: 20px;
+      border-radius: 8px;
+      margin: 12px 0 8px 0;
+      background: #e3e7ef;
+      display: none;
+    }
+    #bar {
+      height: 100%;
+      background: #2baaff;
+      border-radius: 8px;
+      width: 0;
+      transition: width .2s;
+    }
+    #processing {
+      color: #e86d00;
+      font-weight: 600;
+      display:none;
+      margin-top: 5px;
+      font-size: 1rem;
+    }
+    #status {
+      margin: 8px 0 0 0;
+      font-size: 1rem;
+    }
+    @media (max-width: 720px) {
+      .container { max-width: 96vw; padding: 16px 6vw; }
+      .header-row { flex-direction: column; align-items: flex-start; }
+      .upload-face { max-width: 38vw; width: 90px; margin: 0 0 18px 0; }
+      h2 { font-size: 1.38rem; }
+      .subtitle { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header-row">
+      <div class="title-block">
+        <h2>Embedding文件分割系统</h2>
+        <div class="subtitle">The AI workspace that works for you</div>
+      </div>
+      <img src="/static/upload-face.png" class="upload-face" alt="logo">
+    </div>
+    <form id="uploadForm" class="upload-area">
+      <label>
+        选取文件
+        <input type="file" name="files" accept=".pdf,.docx,.doc,.txt,.md,.csv,.tsv,.xlsx,.xls,.jsonl,.png,.jpg,.jpeg" multiple required>
+      </label>
+      <div class="settings-row">
+        <div class="chunk-select">
+          <label>分割块大小:</label>
+          <label><input type="radio" name="chunk_size" value="500" checked> 500</label>
+          <label><input type="radio" name="chunk_size" value="300"> 300</label>
+          <label><input type="radio" name="chunk_size" value="200"> 200</label>
+          <label><input type="radio" name="chunk_size" value="custom"> 自定义</label>
+          <input type="number" id="custom_chars" name="custom_chars" min="10" max="5000" value="400" placeholder="自定义字数" style="display:none;">
+        </div>
+        <div class="overlap-group">
+          <label>分割重叠比例:</label>
+          <input type="number" id="overlap_ratio" name="overlap_ratio" value="20" min="0" max="50" step="1" style="width:54px;"> %
+        </div>
+      </div>
+      <div class="info-tip">
+        如设置25%，表示分割块有25%重叠，建议0～30%。
+      </div>
+      <button type="submit">上传</button>
+      <div id="progress"><div id="bar"></div></div>
+      <div id="processing">文件正在上传，服务器正在处理中...</div>
+      <div id="status"></div>
+      <a href="/admin" target="_blank" style="display:block; text-align:right; margin-top:8px; color:#888;">知识库后台管理</a>
+    </form>
+  </div>
+<script>
+function toggleCustom() {
+    let radios = document.getElementsByName('chunk_size');
+    let customInput = document.getElementById('custom_chars');
+    let customChecked = Array.from(radios).find(r => r.checked && r.value === "custom");
+    customInput.style.display = customChecked ? 'inline-block' : 'none';
+}
+document.querySelectorAll('input[name="chunk_size"]').forEach(r => {
+    r.addEventListener('change', toggleCustom);
+});
+toggleCustom();
+
+document.getElementById('uploadForm').onsubmit = function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const data = new FormData(form);
+
+    // 处理分割大小
+    const chunkSize = form.chunk_size.value === "custom"
+        ? Number(form.custom_chars.value) || 400
+        : Number(form.chunk_size.value);
+
+    data.set("custom_chars", chunkSize);
+
+    // 处理重叠比例
+    const overlapRatio = Math.max(0, Math.min(50, Number(form.overlap_ratio.value) || 20)) / 100;
+    data.set("overlap_ratio", overlapRatio);
+
+    let progress = document.getElementById('progress');
+    let bar = document.getElementById('bar');
+    let processing = document.getElementById('processing');
+    let status = document.getElementById('status');
+
+    progress.style.display = "block";
+    bar.style.width = "0";
+    bar.innerText = "";
+    processing.innerText = "文件正在上传，服务器正在处理中...";
+    processing.style.display = "block";
+    status.innerHTML = "";
+
+    let xhr = new XMLHttpRequest();
+    xhr.open('POST', '/upload');
+    xhr.upload.onprogress = function(ev) {
+        if (ev.lengthComputable) {
+            let percent = ev.loaded / ev.total * 100;
+            bar.style.width = percent + "%";
+            bar.innerText = Math.round(percent) + "%";
+        }
+    };
+    xhr.onloadstart = function() {
+        progress.style.display = "block";
+        bar.style.width = "0";
+        bar.innerText = "";
+        processing.innerText = "文件正在上传，服务器正在处理中...";
+        processing.style.display = "block";
+        status.innerHTML = "";
+    };
+    xhr.onloadend = function() {
+        bar.style.width = "100%";
+        setTimeout(()=>{progress.style.display="none";}, 500);
+    };
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            processing.innerText = "文件已上传完毕";
+            let json;
+            try { json = JSON.parse(xhr.responseText); } catch(e){ json = {}; }
+            if (xhr.status === 200) {
+                status.innerHTML = "<span class='msg'>上传成功，" + JSON.stringify(json.detail) + "</span>";
+            } else {
+                status.innerHTML = "<span class='err'>" + (json.detail || xhr.statusText) + "</span>";
+            }
+        }
+    };
+    xhr.onerror = function() {
+        status.innerHTML = "<span class='err'>上传失败！</span>";
+        progress.style.display = "none";
+        processing.style.display = "none";
+    };
+    xhr.send(data);
+};
+</script>
+</body>
+</html>
+

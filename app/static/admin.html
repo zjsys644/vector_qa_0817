@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>知识库后台管理 · Notion风格</title>
+  <style>
+    :root {
+      --main-bg: #f7f7f8;
+      --card-bg: #fff;
+      --accent: #2baaff;
+      --accent-hover: #207fba;
+      --text-main: #222;
+      --border: #e5e6eb;
+      --shadow: 0 2px 12px rgba(36,41,47,0.06);
+      --radius: 16px;
+      --font: 'Inter','PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+    }
+    html,body {background: var(--main-bg);margin:0;padding:0;font-family:var(--font);}
+    .admin-main {max-width:1000px; margin:36px auto; padding:var(--gap);background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);}
+    h2 {font-size:2em;margin:0 0 18px 0;font-weight:600;color:var(--text-main);}
+    .file-table {width:100%;border-collapse:collapse;margin-top:16px;background:var(--main-bg);}
+    .file-table th,.file-table td {padding:13px 10px;text-align:center;}
+    .file-table th {font-weight:600;font-size:1.05em;background:var(--main-bg);}
+    .file-table tr {border-bottom:1px solid var(--border);}
+    .file-table tr:last-child {border-bottom:none;}
+    .file-table td {font-size:1em;}
+    .file-btn {background:transparent;color:var(--accent);border:none;cursor:pointer;font-weight:600;padding:4px 8px;border-radius:6px;transition:background .15s;}
+    .file-btn:hover {background:rgba(43,170,255,0.06);}
+    .file-btn-danger {color:#e74c3c;}
+    .dialog-bg {position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(40,50,70,0.13);z-index:50;display:none;}
+    .dialog {position:fixed;top:6vh;left:50%;transform:translateX(-50%);background:#fff;border-radius:var(--radius);box-shadow:0 12px 36px rgba(40,48,58,0.08);width:90vw;max-width:720px;max-height:85vh;overflow:auto;padding:32px;z-index:60;display:none;}
+    .dialog h3 {margin:0 0 12px 0;font-size:1.2em;}
+    .dialog table {font-size:.99em;}
+    @media (max-width:600px){.admin-main{padding:4vw 2vw;}}
+    @media (max-width:900px){.dialog{padding:8vw 1vw;}}
+  </style>
+</head>
+<body>
+  <div class="admin-main">
+    <h2>📄 知识库文件列表</h2>
+    <table class="file-table" id="fileTable">
+      <tr>
+        <th style="width:40%;">文件名</th>
+        <th style="width:16%;">片段数</th>
+        <th style="width:32%;">操作</th>
+      </tr>
+    </table>
+    <div style="margin-top:24px;">
+      <a href="/" style="color:#888;font-size:.99em;">← 返回上传页面</a>
+    </div>
+  </div>
+  <!-- 弹窗和遮罩 -->
+  <div class="dialog-bg" id="dialogBg"></div>
+  <div class="dialog" id="popupDialog">
+    <button onclick="closeDialog()" style="float:right;background:#fff;color:#666;border:1px solid #eee;padding:4px 14px;">关闭</button>
+    <h3 id="popup-title"></h3>
+    <div id="popup-content"></div>
+  </div>
+<script>
+function closeDialog(){
+  document.getElementById('dialogBg').style.display='none';
+  document.getElementById('popupDialog').style.display='none';
+}
+function showDialog(title, html){
+  document.getElementById('popup-title').innerText = title;
+  document.getElementById('popup-content').innerHTML = html;
+  document.getElementById('dialogBg').style.display='block';
+  document.getElementById('popupDialog').style.display='block';
+}
+function loadFiles(){
+  fetch('/list_files').then(r=>r.json()).then(arr=>{
+    arr = arr.files || arr;
+    let html = `<tr>
+      <th style="width:40%;">文件名</th>
+      <th style="width:16%;">片段数</th>
+      <th style="width:32%;">操作</th>
+    </tr>`;
+    arr.forEach(item=>{
+      html += `<tr>
+        <td>${item.filename}</td>
+        <td>${item.segments}</td>
+        <td>
+          <button class="file-btn file-btn-info" onclick="viewSegments('${item.filename}')">详情</button>
+          <button class="file-btn file-btn-danger" onclick="delFile('${item.filename}')">删除</button>
+        </td>
+      </tr>`;
+    });
+    document.getElementById('fileTable').innerHTML = html;
+  });
+}
+function delFile(fname){
+  if(!confirm('确定删除该文件的所有分割片段吗？')) return;
+  fetch('/delete_by_filename?filename='+encodeURIComponent(fname),{method:'DELETE'})
+    .then(r=>r.json()).then(()=>loadFiles());
+}
+function viewSegments(fname){
+  fetch('/file_segments?filename='+encodeURIComponent(fname))
+    .then(r=>r.json())
+    .then(arr=>{
+      let html = `<table style="width:100%;font-size:0.98em;background:#fafafd;">
+      <tr><th style="text-align:center;">#</th><th style="text-align:center;">内容</th><th style="text-align:center;">元信息</th></tr>`;
+      arr.forEach((seg,i)=>{
+        html+=`<tr>
+          <td style="color:#999;width:2.8em;text-align:center;">${i+1}</td>
+          <td style="max-width:420px;word-break:break-all;text-align:center;">${seg.text.replace(/[<]/g,'&lt;').replace(/[>]/g,'&gt;')}</td>
+          <td style="color:#666;text-align:center;">${Object.entries(seg.meta).map(([k,v])=>`${k}:${v}`).join("<br>")}</td>
+        </tr>`;
+      });
+      html += "</table>";
+      showDialog(`文件 ${fname} 的分割片段`, html);
+    });
+}
+window.onload=loadFiles;
+</script>
+</body>
+</html>
+

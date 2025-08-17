@@ -1,0 +1,2 @@
+Looking in indexes: https://pypi.tuna.tsinghua.edu.cn/simple
+Requirement already satisfied: qdrant-client in /Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages (1.15.0)

@@ -1,0 +1,28 @@
+{
+  "name_for_human": "PDF Vector QA",
+  "name_for_model": "pdf_vector_qa",
+  "description_for_model": "用于知识库问答的PDF向量检索工具。通过 /search 接口，接收 query 字符串，返回相关内容。",
+  "description_for_human": "上传文档后可用自然语言检索PDF知识库。",
+  "api": {
+    "type": "openapi",
+    "url": "/openapi.json",
+    "is_user_authenticated": false
+  },
+  "auth": {
+    "type": "none"
+  }
+}
+
+"examples": [
+    {
+      "description": "检索不到内容时的返回示例",
+      "input": { "query": "不存在的关键词" },
+      "output": [
+        {
+          "text": "未能在知识库中检索到与您的问题相关的内容，请尝试更换关键词或上传相关文档。",
+          "meta": { "source": "系统提示" },
+          "score": 0.0
+        }
+      ]
+    }
+  ]

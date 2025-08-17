@@ -1,0 +1,18 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - qdrant
+    # 你的 env_file 或 environment 按需保留
+
+volumes:
+  qdrant_data: {}
